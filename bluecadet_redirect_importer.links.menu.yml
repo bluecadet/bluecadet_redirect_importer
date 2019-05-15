@@ -1,0 +1,6 @@
+bluecadet_redirect_importer.importer:
+  title: 'Bulk Import Redirects'
+  parent: redirect.list
+  description: "Bulk Import Redirects"
+  route_name:  bluecadet_redirect_importer.importer
+  weight: 100

@@ -1,0 +1,17 @@
+{
+  "name": "bluecadet/bluecadet_redirect_importer",
+  "description": "Adds ability to Bulk Import Redirects from a csv file.",
+  "type": "custom-drupal-module",
+  "authors": [
+    {
+      "name": "Pete Inge",
+      "role": "Maintainer"
+    }
+  ],
+  "license": "GPL-2.0+",
+  "minimum-stability": "dev",
+  "require": {
+    "php": "^5.3.3 || ^7.0",
+    "composer/installers": "^1.0@dev"
+  }
+}

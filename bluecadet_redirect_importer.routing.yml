@@ -1,0 +1,6 @@
+bluecadet_redirect_importer.importer:
+  path: '/admin/config/search/redirect/bulk-import'
+  defaults:
+    _form: '\Drupal\bluecadet_redirect_importer\Form\RedirectImporter'
+  requirements:
+    _permission: 'bc import redirects'
