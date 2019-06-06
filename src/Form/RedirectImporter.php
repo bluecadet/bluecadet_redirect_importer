@@ -7,6 +7,9 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Entity\File;
 use Drupal\redirect\Entity\Redirect;
 
+/**
+ *
+ */
 class RedirectImporter extends FormBase {
 
   /**
@@ -20,6 +23,13 @@ class RedirectImporter extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+
+    $form['message'] = [
+      '#markup' => "<hr><p>Please uplaod a csv file with <em>2 Header Rows</em> and 4 columns.<br />
+      The Columns shoud be <strong><em>From</em></strong>, <strong><em>To</em></strong>, <strong><em>Redirect Status</em></strong>, <strong><em>Language</em></strong>.</p>
+      <p class='color-error'>Items with the same From/Language will be overwritten.</p>
+      <p>You can use the <a href='https://docs.google.com/spreadsheets/d/15bIUcZd4PZeCC_htpSZGNXPsPyL3NUvsMegO9jJJKYU' target='_blank'>Template Spreadsheet</a> to get started.</p><hr><br/>",
+    ];
 
     $form['redirect_import_file'] = [
       '#type' => 'managed_file',
@@ -55,10 +65,10 @@ class RedirectImporter extends FormBase {
     if (isset($file[0]) && !empty($file[0])) {
       $imp_file = File::load($file[0]);
       $imp_file->setPermanent();
-      // $imp_file->save();
+      $imp_file->save();
     }
 
-    // Build Batch
+    // Build Batch.
     $ops = [
       [[$this, 'buildDataFromFile'], [$imp_file]],
       [[$this, 'importRedirects'], []],
@@ -74,6 +84,9 @@ class RedirectImporter extends FormBase {
     batch_set($batch);
   }
 
+  /**
+   *
+   */
   public function buildDataFromFile($file, &$context) {
     $real_path = \Drupal::service('file_system')->realpath($file->getFileUri());
 
@@ -82,6 +95,7 @@ class RedirectImporter extends FormBase {
     $row = 0;
 
     while (($import_row = fgetcsv($fp, 0, ",")) !== FALSE) {
+      // Skip 2 header Rows.
       if ($row > 1) {
         $raw_data[] = $import_row;
       }
@@ -96,6 +110,9 @@ class RedirectImporter extends FormBase {
     $context['message'] = "Created Raw Data";
   }
 
+  /**
+   *
+   */
   public function importRedirects(&$context) {
     if (empty($context['sandbox'])) {
       $context['sandbox']['progress'] = 0;
@@ -103,14 +120,14 @@ class RedirectImporter extends FormBase {
       $context['sandbox']['max'] = count($context['results']['raw_data']);
     }
 
-    for ($i=0; $i < 1; $i++) {
+    for ($i = 0; $i < 10; $i++) {
 
-      $row = $context['results']['raw_data'][$context['sandbox']['current_row']]? : NULL;
+      $row = $context['results']['raw_data'][$context['sandbox']['current_row']] ? : NULL;
       if (!empty($row[0])) {
 
-
-        $row[2] = $row[2]? : 301;
-        $row[3] = $row[3]? : "en";
+        // Set Defaults.
+        $row[2] = $row[2] ? : 301;
+        $row[3] = $row[3] ? : "en";
 
         redirect_delete_by_path($row[0], $row[3], FALSE);
 
@@ -121,6 +138,7 @@ class RedirectImporter extends FormBase {
         $redirect->setLanguage($row[3]);
         $redirect->save();
 
+        $context['results']['msg'][] = "Added " . $row[0];
       }
 
       $context['sandbox']['current_row']++;
@@ -131,10 +149,13 @@ class RedirectImporter extends FormBase {
 
     if ($context['finished'] >= 1) {
 
-      $context['results']['msg'] = "Finished Processing Redirects";
+      $context['results']['msg'][] = "Finished Processing Redirects";
     }
   }
 
+  /**
+   *
+   */
   public function cleanUp($fid, &$context) {
     file_delete($fid);
     $context['results']['msg'][] = "Cleaning up.";
@@ -145,21 +166,15 @@ class RedirectImporter extends FormBase {
    *
    */
   public function importFinished($success, $results, $operations) {
-    $msgs = [];
 
-    // Validation Step Messages.
-    if (isset($results['msg']) && !empty($results['msg'])) {
-      foreach ($results['msg'] as $m) {
-        $msgs[] = $m;
-      }
+    if (!empty($results['msg'])) {
+      $message_render = [
+        '#theme' => 'item_list',
+        '#items' => $results['msg'],
+      ];
+
+      drupal_set_message(render($message_render));
     }
-
-    $message_render = [
-      '#theme' => 'item_list',
-      '#items' => $msgs,
-    ];
-
-    drupal_set_message(render($message_render));
 
     if (!$success) {
       drupal_set_message(t('Finished with an error.'), 'error');
