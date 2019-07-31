@@ -8,7 +8,7 @@ use Drupal\file\Entity\File;
 use Drupal\redirect\Entity\Redirect;
 
 /**
- *
+ * Form to upload and import Redirects.
  */
 class RedirectImporter extends FormBase {
 
@@ -51,13 +51,6 @@ class RedirectImporter extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    parent::validateForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     // Manage File.
     $file = $form_state->getValue('redirect_import_file', 0);
@@ -66,6 +59,10 @@ class RedirectImporter extends FormBase {
       $imp_file = File::load($file[0]);
       $imp_file->setPermanent();
       $imp_file->save();
+    }
+    else {
+      drupal_set_message(t('No file Attached. Nothing Happened'), 'warning');
+      return;
     }
 
     // Build Batch.
@@ -85,7 +82,7 @@ class RedirectImporter extends FormBase {
   }
 
   /**
-   *
+   * Build Data array from CSV file.
    */
   public function buildDataFromFile($file, &$context) {
     $real_path = \Drupal::service('file_system')->realpath($file->getFileUri());
@@ -111,7 +108,7 @@ class RedirectImporter extends FormBase {
   }
 
   /**
-   *
+   * Import actual redirects.
    */
   public function importRedirects(&$context) {
     if (empty($context['sandbox'])) {
@@ -122,12 +119,12 @@ class RedirectImporter extends FormBase {
 
     for ($i = 0; $i < 10; $i++) {
 
-      $row = $context['results']['raw_data'][$context['sandbox']['current_row']] ? : NULL;
+      $row = $context['results']['raw_data'][$context['sandbox']['current_row']] ?: NULL;
       if (!empty($row[0])) {
 
         // Set Defaults.
-        $row[2] = $row[2] ? : 301;
-        $row[3] = $row[3] ? : "en";
+        $row[2] = $row[2] ?: 301;
+        $row[3] = $row[3] ?: "en";
 
         redirect_delete_by_path($row[0], $row[3], FALSE);
 
@@ -154,7 +151,7 @@ class RedirectImporter extends FormBase {
   }
 
   /**
-   *
+   * Cleanup, delete files, etc.
    */
   public function cleanUp($fid, &$context) {
     file_delete($fid);
@@ -163,7 +160,7 @@ class RedirectImporter extends FormBase {
   }
 
   /**
-   *
+   * Finish function for the batch process.
    */
   public function importFinished($success, $results, $operations) {
 
