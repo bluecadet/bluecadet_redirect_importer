@@ -9,3 +9,13 @@ The Columns shoud be From, To, Redirect Status, Language.
 Items with the same From/Language will be overwritten.
 
 You can use the [Template Spreadsheet](https://docs.google.com/spreadsheets/d/15bIUcZd4PZeCC_htpSZGNXPsPyL3NUvsMegO9jJJKYU) to get started.
+
+## Versions
+
+### 1.x Branch
+
+< Drupal 8.9 compatable
+
+### 2.x Branch
+
+Drupal 8.9 and Drupal 9 Compatible.

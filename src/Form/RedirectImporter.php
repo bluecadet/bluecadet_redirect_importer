@@ -4,13 +4,41 @@ namespace Drupal\bluecadet_redirect_importer\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\file\Entity\File;
 use Drupal\redirect\Entity\Redirect;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Form to upload and import Redirects.
  */
 class RedirectImporter extends FormBase {
+
+  /**
+   * The Messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+
+  /**
+   * Class constructor.
+   */
+  public function __construct(MessengerInterface $messenger) {
+    $this->messenger = $messenger;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    // Instantiates this form class.
+    return new static(
+      // Load the service required to construct this class.
+      $container->get('messenger')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -59,9 +87,11 @@ class RedirectImporter extends FormBase {
       $imp_file = File::load($file[0]);
       $imp_file->setPermanent();
       $imp_file->save();
+
+      ksm($imp_file);
     }
     else {
-      drupal_set_message(t('No file Attached. Nothing Happened'), 'warning');
+      $this->messenger->addWarning('No file Attached. Nothing Happened');
       return;
     }
 
@@ -69,7 +99,7 @@ class RedirectImporter extends FormBase {
     $ops = [
       [[$this, 'buildDataFromFile'], [$imp_file]],
       [[$this, 'importRedirects'], []],
-      [[$this, 'cleanUp'], [$file[0]]],
+      [[$this, 'cleanUp'], [$imp_file]],
     ];
 
     $batch = [
@@ -78,27 +108,29 @@ class RedirectImporter extends FormBase {
       'finished' => [$this, 'importFinished'],
     ];
 
-    batch_set($batch);
+    // batch_set($batch);
   }
 
   /**
    * Build Data array from CSV file.
    */
   public function buildDataFromFile($file, &$context) {
+    ksm($file->getFileUri());
     $real_path = \Drupal::service('file_system')->realpath($file->getFileUri());
-
+    ksm($real_path);
     $fp = fopen($real_path, 'r');
+    ksm($fp);
     $raw_data = [];
     $row = 0;
 
-    while (($import_row = fgetcsv($fp, 0, ",")) !== FALSE) {
-      // Skip 2 header Rows.
-      if ($row > 1) {
-        $raw_data[] = $import_row;
-      }
+    // while (($import_row = fgetcsv($fp, 0, ",")) !== FALSE) {
+    //   // Skip 2 header Rows.
+    //   if ($row > 1) {
+    //     $raw_data[] = $import_row;
+    //   }
 
-      $row++;
-    }
+    //   $row++;
+    // }
 
     $context['results']['msg'][] = "Raw Data Created.";
 
@@ -153,8 +185,13 @@ class RedirectImporter extends FormBase {
   /**
    * Cleanup, delete files, etc.
    */
-  public function cleanUp($fid, &$context) {
-    file_delete($fid);
+  public function cleanUp($imp_file, &$context) {
+
+    $imp_file->setTemporary();
+    $imp_file->save();
+    $imp_file->delete();
+
+    // \Drupal::service('file_system')->delete($fid);
     $context['results']['msg'][] = "Cleaning up.";
     $context['message'] = "Cleaning up.";
   }
@@ -170,11 +207,12 @@ class RedirectImporter extends FormBase {
         '#items' => $results['msg'],
       ];
 
-      drupal_set_message(render($message_render));
+      $msg = render($message_render);
+      $this->messenger->addMessage($msg);
     }
 
     if (!$success) {
-      drupal_set_message(t('Finished with an error.'), 'error');
+      $this->messenger->addError('Finished with an error.');
     }
   }
 
