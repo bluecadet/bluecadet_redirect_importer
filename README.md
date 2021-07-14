@@ -19,3 +19,10 @@ You can use the [Template Spreadsheet](https://docs.google.com/spreadsheets/d/15
 ### 2.x Branch
 
 Drupal 8.9 and Drupal 9 Compatible.
+
+
+## Changelog
+
+### 8.x-2.1.0
+
+- Updated dependencies so we can use Composer v2
