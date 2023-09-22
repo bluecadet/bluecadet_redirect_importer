@@ -2,8 +2,8 @@ type: module
 name: Bluecadet's Redirect Importer
 description: 'Adds ability to Bulk Import Redirects from a csv file.'
 package: Bluecadet
-version: '8.x-3.0.0'
-core_version_requirement: ^9
+version: '8.x-3.1.0'
+core_version_requirement: ^9 || ^10
 
 dependencies:
   - drupal:redirect
