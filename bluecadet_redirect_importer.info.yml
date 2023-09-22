@@ -10,5 +10,5 @@ dependencies:
 
 configure: null
 
-version: 3.1.0
+version: 3.1.0-rc1
 project: bluecadet_redirect_importer
