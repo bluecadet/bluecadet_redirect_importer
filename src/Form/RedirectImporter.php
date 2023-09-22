@@ -87,8 +87,6 @@ class RedirectImporter extends FormBase {
       $imp_file = File::load($file[0]);
       $imp_file->setPermanent();
       $imp_file->save();
-
-      ksm($imp_file);
     }
     else {
       $this->messenger->addWarning('No file Attached. Nothing Happened');
@@ -115,11 +113,8 @@ class RedirectImporter extends FormBase {
    * Build Data array from CSV file.
    */
   public function buildDataFromFile($file, &$context) {
-    ksm($file->getFileUri());
     $real_path = \Drupal::service('file_system')->realpath($file->getFileUri());
-    ksm($real_path);
     $fp = fopen($real_path, 'r');
-    ksm($fp);
     $raw_data = [];
     $row = 0;
 
@@ -207,7 +202,7 @@ class RedirectImporter extends FormBase {
         '#items' => $results['msg'],
       ];
 
-      $msg = render($message_render);
+      $msg = \Drupal::service('renderer')->render($message_render);
       $this->messenger->addMessage($msg);
     }
 
